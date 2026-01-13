@@ -98,22 +98,20 @@ export default function BaseUnit({
 
   // Faucet positions:
   // - California: one faucet per burner, mounted on the back splash (one-to-one)
-  // - New York: one faucet for every two burners (ceil), placed between pairs
+  // - New York: a faucet between every adjacent pair of burners (N-1 faucets),
+  //   except when there is only one burner (one faucet centered).
   const faucetPositions = useMemo(() => {
     if (style === "california") {
       return burnerSlots.map((s) => s.x);
     }
-    const count = Math.ceil(burnerCount / 2);
+
+    // New York style
+    if (burnerSlots.length === 0) return [];
+    if (burnerSlots.length === 1) return [burnerSlots[0].x];
+
     const positions: number[] = [];
-    for (let i = 0; i < count; i++) {
-      const idx = i * 2;
-      if (burnerSlots[idx] && burnerSlots[idx + 1]) {
-        positions.push((burnerSlots[idx].x + burnerSlots[idx + 1].x) / 2);
-      } else if (burnerSlots[idx]) {
-        positions.push(burnerSlots[idx].x);
-      } else {
-        positions.push(0);
-      }
+    for (let i = 0; i < burnerSlots.length - 1; i++) {
+      positions.push((burnerSlots[i].x + burnerSlots[i + 1].x) / 2);
     }
     return positions;
   }, [burnerSlots, burnerCount, style]);
@@ -133,7 +131,7 @@ export default function BaseUnit({
         </mesh>
       ))}
 
-      {/* Tray */}
+      {/* Tray body (full) */}
       <mesh position={[0, trayCenterY, 0]}>
         <boxGeometry args={[width, trayHeight, depth]} />
         <meshStandardMaterial color={materialColor} metalness={0.85} roughness={0.25} />
@@ -170,13 +168,72 @@ export default function BaseUnit({
         </mesh>
       ))}
 
-      {/* California style front cover (hides exposed controls/handles) */}
-      {style === "california" && (
-        <mesh position={[0, trayCenterY + trayHeight / 2 + 0.04, depth / 2 - lipHeight - 0.06]}>
-          <boxGeometry args={[width * 0.98, 0.08, 0.12]} />
-          <meshStandardMaterial color="#444444" metalness={0.9} roughness={0.25} />
-        </mesh>
-      )}
+      {/* California: gas inlet molds on outside front tray wall (one per burner) */}
+      {style === "california" && burnerSlots.map((slot, i) => (
+        // place panel recessed slightly into the front tray wall (valve will protrude outward)
+        <group key={`inlet-${i}`} position={[slot.x, trayCenterY + trayHeight / 4, depth / 2 - 0.02]}>
+          {/* Larger rectangular inlet panel on outside front tray wall */}
+          <mesh>
+            <boxGeometry args={[0.36, 0.34, 0.02]} />
+            <meshStandardMaterial color="#333333" metalness={0.7} roughness={0.3} />
+          </mesh>
+
+          {/* L-shaped gas valve: stub -> right arm -> vertical riser */}
+          {/** Dimensions **/}
+          {/* stubLen along +Z, armLen along +X, vertLen along +Y */}
+          <group>
+            {/* forward stub */}
+            <mesh position={[0, 0, 0.04]} rotation={[Math.PI / 2, 0, 0]}>
+              <cylinderGeometry args={[0.04, 0.04, 0.08, 16]} />
+              <meshStandardMaterial color="#222222" metalness={0.8} roughness={0.35} />
+            </mesh>
+
+            {/* elbow at end of stub */}
+            <mesh position={[0, 0, 0.08]}>
+              <sphereGeometry args={[0.02, 12, 12]} />
+              <meshStandardMaterial color="#222222" metalness={0.8} roughness={0.35} />
+            </mesh>
+
+            {/* horizontal arm to the right (+X) */}
+            <mesh position={[0.08, 0, 0.08]} rotation={[0, 0, Math.PI / 2]}>
+              <cylinderGeometry args={[0.03, 0.03, 0.16, 12]} />
+              <meshStandardMaterial color="#cfcfcf" metalness={1} roughness={0.12} />
+            </mesh>
+
+            {/* elbow at end of arm */}
+            <mesh position={[0.16, 0, 0.08]}>
+              <sphereGeometry args={[0.018, 12, 12]} />
+              <meshStandardMaterial color="#cfcfcf" metalness={1} roughness={0.12} />
+            </mesh>
+
+            {/* vertical riser up (+Y) */}
+            <mesh position={[0.16, 0.06, 0.08]}>
+              <cylinderGeometry args={[0.03, 0.03, 0.12, 12]} />
+              <meshStandardMaterial color="#cfcfcf" metalness={1} roughness={0.12} />
+            </mesh>
+
+            {/* knob at top of riser */}
+            <mesh position={[0.16, 0.12, 0.08]}>
+              <cylinderGeometry args={[0.03, 0.03, 0.04, 12]} />
+              <meshStandardMaterial color="#cfcfcf" metalness={1} roughness={0.12} />
+            </mesh>
+
+            {/* lever extending from top of knob: L-shaped (forward then right) */}
+            <group position={[0.16, 0.12, 0.08]}>
+              {/* first segment: protrude forward (+Z) */}
+              <mesh position={[0, 0, 0.03]}>
+                <boxGeometry args={[0.01, 0.01, 0.06]} />
+                <meshStandardMaterial color="#cfcfcf" metalness={1} roughness={0.12} />
+              </mesh>
+              {/* second segment: extend to the right (+X) from the end of first */}
+              <mesh position={[0.03, 0, 0.06]}>
+                <boxGeometry args={[0.06, 0.01, 0.01]} />
+                <meshStandardMaterial color="#cfcfcf" metalness={1} roughness={0.12} />
+              </mesh>
+            </group>
+          </group>
+        </group>
+      ))}
 
       {/* Faucets (mounted on back splash). California: one per burner. New York: one per two burners. */}
       {faucetPositions.map((xPos, i) => {

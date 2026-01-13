@@ -75,6 +75,7 @@ export default function WokRangeScene() {
             legHeight={1.0}
             wellDepth={0.1}
             materialColor="#555555"
+            style={styleType === "new" ? "newyork" : "california"}
             onBurnerSlots={(slots, trayTopY, wellDepth) => {
               // Return BurnerRing nodes after layout so BaseUnit can render them
               return slots.map((slot, i) => (
