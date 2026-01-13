@@ -171,7 +171,7 @@ export default function BaseUnit({
       {/* California: gas inlet molds on outside front tray wall (one per burner) */}
       {style === "california" && burnerSlots.map((slot, i) => (
         // place panel recessed slightly into the front tray wall (valve will protrude outward)
-        <group key={`inlet-${i}`} position={[slot.x, trayCenterY + trayHeight / 4, depth / 2 - 0.02]}>
+        <group key={`inlet-${i}`} position={[slot.x, trayCenterY + trayHeight / 4, depth / 2 - 0.005]}>
           {/* Larger rectangular inlet panel on outside front tray wall */}
           <mesh>
             <boxGeometry args={[0.36, 0.34, 0.02]} />
